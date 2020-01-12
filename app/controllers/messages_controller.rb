@@ -7,21 +7,21 @@ class MessagesController < ApplicationController
 
   def create
     message = current_user.messages.build(message_params)
-    if message.save
-      redirect_to messages_url
-    else
-      render 'index'
-    end
+    return unless message.save
+
+    ActionCable.server.broadcast 'room_channel',
+                                 content: message.content,
+                                 username: message.user.username
   end
 
   private
 
-    def get_messages
-      @messages = Message.for_display
-      @message  = current_user.messages.build
-    end
+  def get_messages
+    @messages = Message.for_display
+    @message  = current_user.messages.build
+  end
 
-    def message_params
-      params.require(:message).permit(:content)
-    end
+  def message_params
+    params.require(:message).permit(:content)
+  end
 end
